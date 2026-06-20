@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 # --- ENVIRONMENT VARIABLES ---
 TOKEN = os.getenv("BOT_TOKEN")
-# Updated the default channel link here
 CHANNEL_LINK = os.getenv("CHANNEL_LINK", "https://t.me/gladiatoracademy99")
 
 # --- IMAGE LIST ---
@@ -26,34 +25,40 @@ IMAGES = [
     "https://raw.githubusercontent.com/agboolatunmise2020-ctrl/PureWrite/main/11.jpeg"
 ]
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Initial message with the first action button."""
-    keyboard = [[InlineKeyboardButton("👉 جاهز، أرني النتائج", callback_data="get_pics")]]
+    """Start command with button only (intro message removed)."""
+
+    keyboard = [
+        [InlineKeyboardButton("👉 جاهز، أرني النتائج", callback_data="get_pics")]
+    ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    text = (
-        "أنت على بعد خطوة من فهم كيف نتداول الذهب بشكل احترافي 📊\n"
-        "كل صفقة نشرحها قبل الدخول (مش إشارات عشوائية)\n\n"
-        "جاهز تشوف بنفسك؟"
+
+    await update.message.reply_text(
+        "👇",
+        reply_markup=reply_markup
     )
-    
-    await update.message.reply_text(text, reply_markup=reply_markup)
+
 
 async def send_media_and_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Sends 10 images as an album, then immediately sends the final channel link."""
+    """Sends images and final channel link."""
+
     query = update.callback_query
     await query.answer()
-    
+
     chat_id = update.effective_chat.id
 
-    # 1. Create the album
-    media_group = [InputMediaPhoto(media=url) for url in IMAGES]
+    media_group = [
+        InputMediaPhoto(media=url) for url in IMAGES
+    ]
 
     try:
-        # 2. Send the images
-        await context.bot.send_media_group(chat_id=chat_id, media=media_group)
-        
-        # 3. Send the final text and direct channel link button (as requested in the video)
+        await context.bot.send_media_group(
+            chat_id=chat_id,
+            media=media_group
+        )
+
         final_text = (
             "داخل القناة:\n"
             "• تحليل قبل أي صفقة\n"
@@ -61,33 +66,55 @@ async def send_media_and_link(update: Update, context: ContextTypes.DEFAULT_TYPE
             "• تحديثات مباشرة خلال جلسات لندن و نيويورك\n\n"
             "الدخول مفتوح لفترة محدودة ⏳"
         )
-        
-        # The button text from your video: "👉 دخول القناة الرسمية"
-        keyboard = [[InlineKeyboardButton("👉 دخول القناة الرسمية", url=CHANNEL_LINK)]]
-        
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "👉 دخول القناة الرسمية",
+                    url=CHANNEL_LINK
+                )
+            ]
+        ]
+
         await context.bot.send_message(
-            chat_id=chat_id, 
-            text=final_text, 
+            chat_id=chat_id,
+            text=final_text,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        
+
     except Exception as e:
         logger.error(f"Error sending images: {e}")
-        await context.bot.send_message(chat_id=chat_id, text="Error loading images. Please check if files are on GitHub.")
+
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="Error loading images. Please check if files are on GitHub."
+        )
+
 
 def main():
     """Starts the bot."""
+
     if not TOKEN:
         print("Error: BOT_TOKEN not found in environment variables.")
         return
 
     app = Application.builder().token(TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(send_media_and_link, pattern="^get_pics$"))
-    
+
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(
+            send_media_and_link,
+            pattern="^get_pics$"
+        )
+    )
+
     print("Vantagerise Bot is running...")
+
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
